@@ -33,8 +33,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/lotlite-project:backend-latest
-            ${{ secrets.DOCKER_USERNAME }}/lotlite-project:backend-v${{ github.run_number }}
+            ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:backend-latest
+            ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:backend-v${{ github.run_number }}
 
       - name: Build and push frontend Docker image
         uses: docker/build-push-action@v5
@@ -44,56 +44,60 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/lotlite-project:frontend-latest
-            ${{ secrets.DOCKER_USERNAME }}/lotlite-project:frontend-v${{ github.run_number }}
+            ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-latest
+            ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-v${{ github.run_number }}
 
   deploy:
-    runs-on: ubuntu-latest
-    needs: build
+  runs-on: ubuntu-latest
+  needs: build
 
-    # OnlyRun this job on pushes to the main branch
-    if: github.event_name == 'push'
+  # Only run this job on pushes to the main branch
+  if: github.event_name == 'push'
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+    - name: Set up SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Add EC2 host key to known hosts
-        run: echo "${{ secrets.EC2_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+    - name: Add EC2 host key to known hosts
+      run: echo "${{ secrets.EC2_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
 
-      - name: Deploy to AWS EC2
-        run: |
-          echo "Deploying to AWS EC2"
-          ssh ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+    - name: Deploy to AWS EC2
+      run: |
+        echo "Deploying to AWS EC2"
+        ssh ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
 
-            # Starting directory
-            cd /home/ubuntu
+          # Starting directory
+          cd /home/ubuntu
 
-            # Check if the application directory exists, clone if it doesn't
-            if [ ! -d "/home/ubuntu/Lotlite-project" ]; then
-                git clone https://$GITHUB_ACCESS_TOKEN@github.com//Lotlite-project.git
-            fi
-            
-            # Navigate to the application directory
-            cd /home/ubuntu/Lotlite-project
+          # Check if the application directory exists, clone if it doesn't
+          if [ ! -d "/home/ubuntu/Better-Assignment-Internshala" ]; then
+              git clone https://github.com/SandyN12058/Better-Assignment-Internshala.git
+          fi
 
-            # Fetch the latest code from the repository
-            git pull origin main
+          # Navigate to the application directory
+          cd /home/ubuntu/Better-Assignment-Internshala
 
-            # Login to dockerhub account
-            echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
+          # Fetch the latest code from the repository
+          git pull origin main
 
-            # Pull the latest Docker images
-            docker-compose pull
-            
-            # Stop and remove existing containers
-            docker-compose down || true
-            
-            # Run the new containers
-            docker-compose up -d
-          EOF
+          # Login to Dockerhub account (useful if we need to pull Docker images)
+          echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
+
+          # Pull the latest Docker images (this is optional if you're using pre-built images)
+          docker pull ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:backend-latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-latest
+
+          # Deploy to Kubernetes
+          kubectl apply -f k8s/deployment.yaml  # Apply the deployment
+          kubectl apply -f k8s/service.yaml     # Apply the service
+
+          # Verify pods are running
+          kubectl get pods
+
+        EOF
+
