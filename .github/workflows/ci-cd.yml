@@ -93,8 +93,8 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-latest
 
             # Deploy to Kubernetes
-            kubectl apply -f k8s/deployment.yaml  # Apply the deployment
-            kubectl apply -f k8s/service.yaml     # Apply the service
+            kubectl apply -f k8s/deployment.yml  # Apply the deployment
+            kubectl apply -f k8s/service.yml     # Apply the service
 
             # Verify pods are running
             kubectl get pods
