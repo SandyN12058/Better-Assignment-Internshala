@@ -10,7 +10,8 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8080
-  type: LoadBalancer  # Use LoadBalancer for exposing the service to the external world
+      nodePort: 31000  # Exposing the backend service on NodePort
+  type: NodePort  # Changed to NodePort
 
 ---
 # frontend-service.yaml
@@ -25,4 +26,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 3000
-  type: LoadBalancer  # Exposing frontend as LoadBalancer for external access
+      nodePort: 32000  # Exposing the frontend service on NodePort
+  type: NodePort  # Changed to NodePort
