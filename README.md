@@ -4,7 +4,9 @@
 
 This project automates the **build**, **test**, and **deployment** process for the **frontend** and **backend** applications using **CI/CD**, **Docker**, **Kubernetes**, and **AWS EC2**. It also includes **automated tests** and **notifications** to keep the team informed about the deployment success or failure.
 
-![Project Workflow](./diagrams/Workflow_diagram_dark.gif.svg)
+<p align="center">
+  <img src="./diagrams/Workflow_diagram_dark.gif.svg" alt="Project Workflow" width="600"/>
+</p>
 
 ## Steps Taken:
 
