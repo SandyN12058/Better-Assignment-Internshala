@@ -9,6 +9,42 @@ on:
       - main
 
 jobs:
+  # Automated tests for pull requests
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up environment and install dependencies
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies (Backend)
+        run: |
+          cd backend
+          npm install
+
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          npm test  # Assuming you are using Jest or Mocha for backend tests
+
+      - name: Install dependencies (Frontend)
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run Frontend Tests
+        run: |
+          cd frontend
+          npm test  # Assuming you are using Jest for frontend tests
+
+  # Build and Push Docker images
   build:
     runs-on: ubuntu-latest
 
@@ -47,11 +83,10 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-latest
             ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-v${{ github.run_number }}
 
+  # Deployment to AWS EC2
   deploy:
     runs-on: ubuntu-latest
     needs: build
-
-    # Only run this job on pushes to the main branch
     if: github.event_name == 'push'
 
     steps:
@@ -73,6 +108,7 @@ jobs:
 
             # Starting directory
             cd /home/ubuntu
+            sudo su
 
             # Check if the application directory exists, clone if it doesn't
             if [ ! -d "/home/ubuntu/Better-Assignment-Internshala" ]; then
@@ -93,10 +129,26 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/better-assignment-internshala:frontend-latest
 
             # Deploy to Kubernetes
-            kubectl apply -f k8s/deployment.yml  # Apply the deployment
-            kubectl apply -f k8s/service.yml     # Apply the service
+            # kubectl apply -f k8s/deployment.yml  # Apply the deployment
+            # kubectl apply -f k8s/service.yml     # Apply the service
 
             # Verify pods are running
             kubectl get pods
 
           EOF
+
+      # Notify Slack on Deployment Success
+      # - name: Notify Slack on Deployment Success
+        # if: success()
+        # run: |
+          # curl -X POST -H 'Content-type: application/json' \
+          # --data '{"text":"Deployment to EC2 was successful!"}' \
+          # ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # Notify Slack on Deployment Failure
+      # - name: Notify Slack on Deployment Failure
+        # if: failure()
+        # run: |
+          # curl -X POST -H 'Content-type: application/json' \
+          # --data '{"text":"Deployment to EC2 failed. Please check the logs!"}' \
+          # ${{ secrets.SLACK_WEBHOOK_URL }}
