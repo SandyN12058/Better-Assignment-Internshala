@@ -84,5 +84,5 @@ This project automates the **build**, **test**, and **deployment** process for t
 
 4. **Monitor Notifications**:
 
-   - You will receive Slack and email notifications about the pipeline status.
+   - You will receive Slack notifications about the pipeline status.
 
